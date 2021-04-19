@@ -226,24 +226,29 @@ class Table:
         style += "html{width:1366px;height:768px;background-color: white;}table{"
 
         # random center align
-        if (random.randint(0, 1) == 1):
-            style += "text-align:center;"
+        # if (random.randint(0, 1) == 1):
+        style += "text-align:center;"
 
         style += """border-collapse:collapse;}td,th{padding:6px;padding-left: 15px;padding-right: 15px;"""
+        #
+        # if(self.border_cat==0):
+        #     style += """ border:1px solid black;} """
+        # elif(self.border_cat==2):
+        #     style += """border-bottom:1px solid black;}"""
+        # elif(self.border_cat==3):
+        #     style+="""border-left: 1px solid black;}
+        #                th{border-bottom: 1px solid black;} table tr td:first-child,
+        #                table tr th:first-child {border-left: 0;}"""
+        # else:
+        #     style+="""}"""
 
-        if(self.border_cat==0):
-            style += """ border:1px solid black;} """
-        elif(self.border_cat==2):
-            style += """border-bottom:1px solid black;}"""
-        elif(self.border_cat==3):
-            style+="""border-left: 1px solid black;}
-                       th{border-bottom: 1px solid black;} table tr td:first-child, 
-                       table tr th:first-child {border-left: 0;}"""
-        else:
-            style+="""}"""
+        style_1 = style + """border-bottom:1px solid black;}"""
 
-        style += "</style></head>"
-        return style
+        style_2 = style + """ border:1px solid black;} """
+
+        style_1 += "</style></head>"
+        style_2 += "</style></head>"
+        return style_1, style_2
 
     def create_html(self):
         '''Depending on various conditions e.g. columns spanned, rows spanned, data types of columns,
@@ -251,9 +256,8 @@ class Table:
         script'''
 
         temparr=['td', 'th']
-        html="""<html>"""
-        html+=self.create_style()
-        html+="""<body><table>"""
+
+        html = """<body><table>"""
         for r in range(self.no_of_rows):
             html+='<tr>'
             for c in range(self.no_of_cols):
@@ -359,17 +363,23 @@ class Table:
         if(self.assigned_category==3):                                      #if assigned category is 3, then it should have spanned rows or columns
             local_span_flag=True
         elif(self.assigned_category==4):                                    #if assigned category is 4, spanning/not spanning doesn't matter
-            local_span_flag=random.choices([True,False],weights=[0.5,0.5])[0]   #randomly choose if to span columns and rows for headers or not
+            local_span_flag = random.choices([True, False], weights=[0.5, 0.5])[0]   #randomly choose if to span columns and rows for headers or not
         #local_span_flag=True
         if(local_span_flag):
             self.make_header_col_spans()
 
-        html=self.create_html()                                             #create equivalent html
+        style_1, style_2 = self.create_style()
+        style_1 = """<html>""" + style_1
+        style_2 = """<html>""" + style_2
+        html = self.create_html()                                             #create equivalent html
+        html_1 = style_1 + html
+        html_2 = style_2 + html
 
         #create same row, col and cell matrices
-        cells_matrix,cols_matrix,rows_matrix=self.create_same_cell_matrix(),\
+        cells_matrix, cols_matrix, rows_matrix=self.create_same_cell_matrix(),\
                                              self.create_same_col_matrix(),\
                                              self.create_same_row_matrix()
-        tablecategory=self.select_table_category()                      #select table category of the table
-        return cells_matrix,cols_matrix,rows_matrix,self.idcounter,html,tablecategory
+        tablecategory = self.select_table_category()                      #select table category of the table
+        # return cells_matrix, cols_matrix, rows_matrix, self.idcounter, html_1, tablecategory
+        return html_1, html_2, self.idcounter
 

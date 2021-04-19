@@ -19,6 +19,7 @@ from selenium.webdriver import Firefox
 from selenium.webdriver import PhantomJS
 import warnings
 from TableGeneration.Transformation import *
+from uuid import uuid4
 
 def warn(*args,**kwargs):
     pass
@@ -73,7 +74,7 @@ class GenerateTFRecord:
         tables_cat_dist[3]=seconddiv-tables_cat_dist[2]
         return tables_cat_dist
 
-    def create_dir(self,fpath):                         #creates directory fpath if it does not exist
+    def create_dir(self, fpath):                         #creates directory fpath if it does not exist
         if(not os.path.exists(fpath)):
             os.mkdir(fpath)
 
@@ -149,6 +150,7 @@ class GenerateTFRecord:
 
         rc_count=0                                              #for iterating through row and col array
         for assigned_category,cat_count in enumerate(self.tables_cat_dist):
+            assigned_category = 3
             for _ in range(cat_count):
                 rows = int(round(rc_arr[rc_count][0]))
                 cols = int(round(rc_arr[rc_count][1]))
@@ -173,15 +175,17 @@ class GenerateTFRecord:
                         #if(apply_shear==True):
                         if(assigned_category+1==4):
                             #randomly select shear and rotation levels
-                            while(True):
-                                shearval = np.random.uniform(self.minshearval, self.maxshearval)
-                                rotval = np.random.uniform(self.minrotval, self.maxrotval)
-                                if(shearval!=0.0 or rotval!=0.0):
-                                    break
+                            # while(True):
+                            #     shearval = np.random.uniform(self.minshearval, self.maxshearval)
+                            #     rotval = np.random.uniform(self.minrotval, self.maxrotval)
+                            #     if(shearval!=0.0 or rotval!=0.0):
+                            #         break
                             #If the image is transformed, then its categorycategory is 4
 
                             #transform image and bounding boxes of the words
-                            im, bboxes = Transform(im, bboxes, shearval, rotval, self.max_width, self.max_height)
+                            shearval = 0
+                            rotval = 0
+                            # im, bboxes = Transform(im, bboxes, shearval, rotval, self.max_width, self.max_height)
                             tablecategory=4
                                 
                                 
@@ -247,6 +251,66 @@ class GenerateTFRecord:
 
             img_name=os.path.join('bboxes/',output_file_name+'_'+str(imgindex)+'_'+matname+'.jpg')
             cv2.imwrite(img_name,im)
+
+    def generate_img(self, driver, output_file_name):
+        row_col_min = [self.row_min, self.col_min]  # to randomly select number of rows
+        row_col_max = [self.row_max, self.col_max]  # to randomly select number of columns
+        rc_arr = np.random.uniform(low=row_col_min, high=row_col_max, size=(1, 2))  # random row and col selection for N images
+        all_table_categories = [0, 0, 0, 0]  # These 4 values will count the number of images for each of the category
+        rc_arr[:, 0] = rc_arr[:, 0] + 2  # increasing the number of rows by a fix 2. (We can comment out this line. Does not affect much)
+        data_arr = []
+        exceptioncount = 0
+
+        rc_count = 0  # for iterating through row and col array
+        for assigned_category, cat_count in enumerate(self.tables_cat_dist):
+            assigned_category = 3
+            for _ in range(cat_count):
+                rows = int(round(rc_arr[rc_count][0]))
+                cols = int(round(rc_arr[rc_count][1]))
+
+                exceptcount = 0
+                while (True):
+                    # This loop is to repeat and retry generating image if some an exception is encountered.
+                    # initialize table class
+                    table = Table(rows, cols, self.unlvimagespath, self.unlvocrpath, self.unlvtablepath,
+                                  assigned_category + 1, self.distributionfile)
+                    # get table of rows and cols based on unlv distribution and get features of this table
+                    # (same row, col and cell matrices, total unique ids, html conversion of table and its category)
+                    html_1, html_2, id_count = table.create()
+
+                    # convert this html code to image using selenium webdriver. Get equivalent bounding boxes
+                    # for each word in the table. This will generate ground truth for our problem
+                    im_1, _ = html_to_img(driver, html_1, id_count)
+                    im_2, _ = html_to_img(driver, html_2, id_count)
+
+                    # apply_shear: bool - True: Apply Transformation, False: No Transformation | probability weight for shearing to be 25%
+                    # apply_shear = random.choices([True, False],weights=[0.25,0.75])[0]
+
+                    # if(apply_shear==True):
+
+                    # if the image and equivalent html is need to be stored
+                    image_name = str(uuid4())+'.png'
+                    path_1 = os.path.join(output_file_name, 'type_1', image_name)
+                    im_1.save(path_1, dpi=(600, 600))
+
+                    path_2 = os.path.join(output_file_name, 'type_2', image_name)
+                    im_2.save(path_2, dpi=(600, 600))
+
+
+    def write_img(self, N=10):
+        opts = Options()
+        opts.set_headless()
+        assert opts.headless
+        driver = Firefox(options=opts)
+        self.create_dir('test')
+        self.create_dir('test/type_1/')
+        self.create_dir('test/type_2/')
+
+        for _ in range(N):
+            self.generate_img(driver, './test/')
+
+        driver.stop_client()
+        driver.quit()
 
 
 

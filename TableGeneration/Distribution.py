@@ -5,6 +5,7 @@ from tqdm import tqdm
 import numpy as np
 import pickle
 
+
 class Distribution:
     '''This class extracts the distribution of text, numbers and others(containing special characters) from unlv dataset'''
     def __init__(self,images_path,ocr_path,table_path,picklefilename):
@@ -155,4 +156,4 @@ class Distribution:
             counter['column']+=1
             combined_counter.append(counter)
 
-        return im, table_coords,combined_counter
+        return im, table_coords, combined_counter

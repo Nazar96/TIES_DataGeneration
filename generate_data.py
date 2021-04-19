@@ -29,8 +29,8 @@ distributionfile='unlv_distribution'
 
 t = GenerateTFRecord(args.outpath,filesize,args.imagespath,
                      args.ocrpath,args.tablepath,visualizeimgs,visualizebboxes,distributionfile)
-t.write_to_tf(args.threads)
-
+# t.write_to_tf(args.threads)
+t.write_img(10)
 
 
 
