@@ -297,7 +297,7 @@ class GenerateTFRecord:
                     im_2.save(path_2, dpi=(600, 600))
 
 
-    def write_img(self, N=10):
+    def write_img(self, N=100):
         opts = Options()
         opts.set_headless()
         assert opts.headless

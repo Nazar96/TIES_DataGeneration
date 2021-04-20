@@ -230,6 +230,16 @@ class Table:
         style += "text-align:center;"
 
         style += """border-collapse:collapse;}td,th{padding:6px;padding-left: 15px;padding-right: 15px;"""
+
+        style_list = [
+            """ border:1px solid black;} """,
+            """border-bottom:1px solid black;}""",
+            """border-left: 1px solid black;}
+                                   th{border-bottom: 1px solid black;} table tr td:first-child,
+                                   table tr th:first-child {border-left: 0;}""",
+            """}""",
+        ]
+
         #
         # if(self.border_cat==0):
         #     style += """ border:1px solid black;} """
@@ -242,8 +252,8 @@ class Table:
         # else:
         #     style+="""}"""
 
-        style_1 = style + """border-bottom:1px solid black;}"""
-
+        random_style = np.random.choice(style_list)
+        style_1 = style + random_style
         style_2 = style + """ border:1px solid black;} """
 
         style_1 += "</style></head>"
