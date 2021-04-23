@@ -118,7 +118,7 @@ class Table:
         self.headers[0:2, :] = 'h'
 
 
-    def generate_random_text(self,type):
+    def generate_random_text(self,type, max_length=3):
         '''Depending on the data type of column, this function returns a randomly selected string (words or numbers)
         from unlv dataset and unique id assigned to Each word or number in the string.
         '''
@@ -129,7 +129,7 @@ class Table:
         elif(type=='r'):
             out=random.sample(self.all_others,1)
         else:
-            text_len=random.randint(1,2)
+            text_len=random.randint(1,max_length)
             out= random.sample(self.all_words,text_len)
 
         for e in out:
@@ -260,7 +260,7 @@ class Table:
         style_2 += "</style></head>"
         return style_1, style_2
 
-    def create_html(self):
+    def create_html(self, max_text_length):
         '''Depending on various conditions e.g. columns spanned, rows spanned, data types of columns,
         regular or irregular headers, tables types and border types, this function creates equivalent html
         script'''
@@ -291,7 +291,7 @@ class Table:
                         continue
                     html += '<' + htmlcol + """ colspan=""" + str(col_span_value)
 
-                out,ids = self.generate_random_text(self.cell_types[r, c].decode('utf-8'))
+                out,ids = self.generate_random_text(self.cell_types[r, c].decode('utf-8'), max_text_length)
                 html+='>'+out+'</'+htmlcol+'>'
 
                 self.data_matrix[r,c]=ids
@@ -378,10 +378,11 @@ class Table:
         if(local_span_flag):
             self.make_header_col_spans()
 
+        max_text_length = np.random.choice([1, 3, 5, 15])
         style_1, style_2 = self.create_style()
         style_1 = """<html>""" + style_1
         style_2 = """<html>""" + style_2
-        html = self.create_html()                                             #create equivalent html
+        html = self.create_html(max_text_length)                                             #create equivalent html
         html_1 = style_1 + html
         html_2 = style_2 + html
 
