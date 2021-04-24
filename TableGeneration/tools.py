@@ -45,13 +45,14 @@ def html_to_img(driver,html_content,id_count):
                 bboxes.append([lentext,txt,xmin,ymin,xmax,ymax])
                 # cv2.rectangle(im,(xmin,ymin),(xmax,ymax),(0,0,255),2)
 
+            # driver.save_screenshot(save_path)
             png = driver.get_screenshot_as_png()
-
+            #
             im = Image.open(BytesIO(png))
-
-            im = im.crop((0,0, max_width, max_height))
-
-            return im,bboxes
+            #
+            # im = im.crop((0,0, max_width, max_height))
+            #
+            return im, bboxes
         except Exception as e:
             counter+=1
             if(counter==10):
