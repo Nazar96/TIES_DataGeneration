@@ -21,6 +21,8 @@ from selenium.webdriver import PhantomJS
 import warnings
 from TableGeneration.Transformation import *
 from uuid import uuid4
+import matplotlib.pyplot as plt
+from selenium.common.exceptions import TimeoutException
 
 
 def warn(*args, **kwargs):
@@ -36,6 +38,18 @@ class Logger:
         file = open('logfile.txt', 'a+')
         file.write(txt)
         file.close()
+
+
+def get_img_border(img, pad=2, min_value=10):
+    height, width = img.shape[:2]
+
+    h = img.min(axis=0)
+    v = img.min(axis=1)
+    h_idx = np.where(h < min_value)[0]
+    v_idx = np.where(v < min_value)[0]
+    h_min, h_max = max(h_idx.min() - pad, 0), min(h_idx.max() + pad, width)
+    v_min, v_max = max(v_idx.min() - pad, 0), min(v_idx.max() + pad, height)
+    return v_min, v_max, h_min, h_max
 
 
 class GenerateTFRecord:
@@ -135,11 +149,10 @@ class GenerateTFRecord:
                 cols = np.random.randint(self.col_min, self.col_max)
                 max_text_length = np.random.choice([1, 3, 5, 15])
 
-                driver.set_window_size((cols*20 + max_text_length*10) * 6, (rows*15 + max_text_length*10) * 3)
                 # This loop is to repeat and retry generating image if some an exception is encountered.
                 # initialize table class
                 table = Table(rows, cols, self.unlvimagespath, self.unlvocrpath, self.unlvtablepath,
-                              3, self.distributionfile, max_text_length)
+                              3, self.distributionfile)
                 # get table of rows and cols based on unlv distribution and get features of this table
                 # (same row, col and cell matrices, total unique ids, html conversion of table and its category)
                 html_1, html_2, id_count = table.create()
@@ -151,19 +164,27 @@ class GenerateTFRecord:
                 path_1 = os.path.join(output_file_name, 'type_1', image_name)
                 path_2 = os.path.join(output_file_name, 'type_2', image_name)
 
-                im_1, _ = html_to_img(driver, html_1, id_count)
-                im_2, _ = html_to_img(driver, html_2, id_count)
+                script = """
+                    elements = document.querySelectorAll('*')
+                    for (var i=0; i<elements.length; i++){
+                        elements[i].style.color = 'rgba(0,0,0,0)'
+                    }
+                    """
+                im_1, _ = html_to_img(driver, html_1, id_count, script=None)
+                im_2, _ = html_to_img(driver, html_2, id_count, script=script)
 
-                im_1.save(path_1, )
-                im_2.save(path_2, )
-            except:
+                v_min, v_max, h_min, h_max = get_img_border(im_2)
+                cv2.imwrite(path_1, im_1[v_min:v_max, h_min:h_max])
+                cv2.imwrite(path_2, im_2[v_min:v_max, h_min:h_max])
+
+            except TimeoutException:
                 pass
 
     def write_img(self, N=100):
         options = Options()
         options.add_argument("--headless")
         driver = Firefox(options=options)
-        # driver.set_window_size(200, 200)
+        driver.set_window_size(2048, 2048)
 
         self.create_dir('test')
         self.create_dir('test/type_1/')

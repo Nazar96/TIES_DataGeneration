@@ -17,10 +17,10 @@ def warn(*args, **kwargs):
     pass
 
 warnings.warn = warn
+import numpy as np
 
 
-
-def html_to_img(driver,html_content,id_count):
+def html_to_img(driver,html_content,id_count, script=None):
     '''converts html to image'''
     counter=1                #This counter is to keep track of the exceptions and stop execution after 10 exceptions have occurred
     while(True):
@@ -46,9 +46,12 @@ def html_to_img(driver,html_content,id_count):
                 # cv2.rectangle(im,(xmin,ymin),(xmax,ymax),(0,0,255),2)
 
             # driver.save_screenshot(save_path)
+            if script is not None:
+                driver.execute_script(script)
             png = driver.get_screenshot_as_png()
             #
             im = Image.open(BytesIO(png))
+            im = np.asarray(im)
             #
             # im = im.crop((0,0, max_width, max_height))
             #
